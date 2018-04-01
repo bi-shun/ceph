@@ -293,7 +293,7 @@ endif(WITH_LEVELDB)
 
 find_package(snappy REQUIRED)
 
-option(WITH_BROTLI "Brotli compression support" OFF)
+option(WITH_BROTLI "Brotli compression support" ON)
 if(WITH_BROTLI)
   set(HAVE_BROTLI TRUE)
 endif()
