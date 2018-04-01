@@ -14,7 +14,6 @@ ExternalProject_Add(brotli_ext
              -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
 			 -DCMAKE_C_FLAGS=${ZSTD_C_FLAGS}
              -DCMAKE_AR=${CMAKE_AR}
-  CONFIGURE_COMMAND ./configure-cmake --disable-debug 
   INSTALL_COMMAND ""
   BUILD_COMMAND $(MAKE)
   BUILD_IN_SOURCE 1
