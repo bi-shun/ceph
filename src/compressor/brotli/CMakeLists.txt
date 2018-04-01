@@ -6,10 +6,10 @@ set(brotli_sources
 )
 include(ExternalProject)
 ExternalProject_Add(brotli_ext
-  DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/src/
+  DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/src/
   GIT_REPOSITORY "https://github.com/google/brotli.git"
   GIT_TAG "master"
-  SOURCE_DIR ${CMAKE_BINARY_DIR}/src/brotli
+  SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/brotli
   CONFIGURE_COMMAND ./configure-cmake --disable-debug 
   INSTALL_COMMAND ""
   BUILD_COMMAND $(MAKE)
