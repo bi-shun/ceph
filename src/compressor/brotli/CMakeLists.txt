@@ -10,11 +10,15 @@ ExternalProject_Add(brotli_ext
   GIT_REPOSITORY "https://github.com/google/brotli.git"
   GIT_TAG "master"
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/brotli
+  CMAKE_ARGS -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+             -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+			 -DCMAKE_C_FLAGS=${ZSTD_C_FLAGS}
+             -DCMAKE_AR=${CMAKE_AR}
   CONFIGURE_COMMAND ./configure-cmake --disable-debug 
   INSTALL_COMMAND ""
   BUILD_COMMAND $(MAKE)
   BUILD_IN_SOURCE 1
-  INSTALL_COMMAND "")
+  INSTALL_COMMAND "true")
 
 ExternalProject_Add_Step(brotli_ext forcebuild
   DEPENDEES configure
