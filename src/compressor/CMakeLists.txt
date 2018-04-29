@@ -18,11 +18,13 @@ endif()
 if(HAVE_BROTLI)
   add_subdirectory(brotli)
 endif()
+  add_subdirectory(zstdmt)
 
 set(ceph_compressor_libs
     ceph_snappy
     ceph_zlib
-    ceph_zstd)
+    ceph_zstd
+	ceph_zstdmt)
 
 if(HAVE_LZ4)
   list(APPEND ceph_compressor_libs ceph_lz4)
@@ -43,7 +45,8 @@ if(WITH_EMBEDDED)
       cephd_compressor_base
       cephd_compressor_snappy
       cephd_compressor_zlib
-      cephd_compressor_zstd)
+      cephd_compressor_zstd
+	  cephd_compressor_zstdmt)
   if(HAVE_LZ4)
     list(APPEND cephd_compressor_libs cephd_compressor_lz4)
   endif()
