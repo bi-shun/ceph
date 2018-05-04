@@ -1,19 +1,19 @@
 # zstd
 
 # libzstd - build it statically
-set(ZSTDMT_C_FLAGS "-fPIC -Wno-unused-variable -O3")
+set(ZSTDMT_C_FLAGS "-fPIC -Wno-unused-variable -O0 -g3")
 
 include(ExternalProject)
-include_directories(${CMAKE_CURRENT_LIST_DIR}/lib ${CMAKE_SOURCE_DIR}/src/zstd/lib)
 
 ExternalProject_Add(zstdmt_ext
-  SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/zstd/build/cmake
+  SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/external/zstd/build/cmake
   CMAKE_ARGS -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
              -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
              -DCMAKE_C_FLAGS=${ZSTDMT_C_FLAGS}
              -DCMAKE_AR=${CMAKE_AR}
-  BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/libzstd
-  BUILD_COMMAND $(MAKE) libzstd_static
+             -DZSTD_BUILD_STATIC=ON
+  BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/libzstdmt
+  BUILD_COMMAND $(MAKE)
   INSTALL_COMMAND "true")
 
 # force zstd make to be called on each time
@@ -23,11 +23,13 @@ ExternalProject_Add_Step(zstdmt_ext forcebuild
   COMMAND "true"
   ALWAYS 1)
 
-add_library(zstd STATIC IMPORTED)
-set_property(TARGET zstd PROPERTY
-  IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/libzstd/lib/libzstd.a")
-add_dependencies(zstd zstdmt_ext)
-set(ZSTDMT_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/src/zstd/lib)
+include_directories(${CMAKE_CURRENT_LIST_DIR}/lib ${CMAKE_CURRENT_LIST_DIR}/libzstdmt ${CMAKE_SOURCE_DIR}/src/external/zstd/lib)
+
+add_library(zstd2 STATIC IMPORTED)
+set_property(TARGET zstd2 PROPERTY
+  IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/libzstdmt/lib/libzstd.a")
+add_dependencies(zstd2 zstdmt_ext)
+set(ZSTDMT_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/src/external/zstd/lib ${CMAKE_CURRENT_LIST_DIR}/libzstdmt)
 
 #
 #
@@ -41,12 +43,7 @@ set(zstdmt_sources
 )
 
 add_library(ceph_zstdmt SHARED ${zstdmt_sources})
-add_dependencies(ceph_zstdmt ${CMAKE_SOURCE_DIR}/src/ceph_ver.h)
-target_link_libraries(ceph_zstdmt zstd)
-set_target_properties(ceph_zstdmt PROPERTIES
-  VERSION 2.0.0
-  SOVERSION 2
-  INSTALL_RPATH "")
+target_link_libraries(ceph_zstdmt zstd2)
 install(TARGETS ceph_zstdmt DESTINATION ${compressor_plugin_dir})
 
 if(WITH_EMBEDDED)

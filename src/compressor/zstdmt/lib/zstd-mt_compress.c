@@ -257,7 +257,8 @@ static void *pt_compress(void *arg)
 		pthread_mutex_lock(&ctx->read_mutex);
 		in.size = ctx->inputsize;
 		rv = ctx->fn_read(ctx->arg_read, &in);
-		if (rv != 0) {
+               
+                if (rv != 0) {
 			pthread_mutex_unlock(&ctx->read_mutex);
 			result = mt_error(rv);
 			goto error;

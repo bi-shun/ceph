@@ -79,7 +79,7 @@ static int opt_stdout = 0;
 static int opt_level = LEVEL_DEF;
 static int opt_force = 0;
 static int opt_keep = 0;
-static int opt_threads;
+static int opt_threads=1;
 
 /* 0 = quiet | 1 = normal | >1 = verbose */
 static int opt_verbose = 1;
@@ -114,59 +114,54 @@ static unsigned int crc32_table[1][256];
 static unsigned int crc32(const unsigned char *buf, size_t size,
                           unsigned int crc);
 
+struct readArg {
+  bufferlist::iterator *p;
+  size_t remain; 
+};
+
 static int ReadData(void *arg, MT_Buffer * in)
 {
-
-  const bufferlist *bin = (const bufferlist *)arg;
-  size_t length = bin->length();
-  bufferptr ptr = buffer::create_page_aligned(length);
-  size_t offset = 0;
-  for (auto i = bin->buffers().begin(); i != bin->buffers().end();i++) {
-    const uint8_t* next_in = (uint8_t*)i->c_str();
-    size_t len = i->length();
-    uint8_t* next_out = (uint8_t*)ptr.c_str();
-    memcpy(next_out+offset, next_in,len);
-    offset += len;
-  }
-  in->size = length;
-  in->buf = ptr.c_str();
-  if (opt_mode == MODE_LIST && opt_verbose)
-    //bytes_read += doe;
-
+  readArg a = *(readArg *)arg;
+  const char *data;
+  const char **bufchar = &data;
+  size_t r_size = a.p->get_ptr_and_advance(in->size, bufchar);
+  memcpy(in->buf, data, r_size); 
+  in->size = r_size;
   return 0;
 }
 
 static int WriteData(void *arg, MT_Buffer * out)
 {
   bufferlist *ob = (bufferlist *)arg;
-  bufferptr ptr = buffer::create_page_aligned(out->size);
+  bufferptr ptr = buffer::create_page_aligned(out->size+100);
+  uint8_t* next_out = (uint8_t*)ptr.c_str();
+  memcpy(next_out, out->buf, out->size);
   ob->append(ptr, 0, out->size);
   return 0;
 }
 
 
-static const char *do_compress(const bufferlist &in, bufferlist &out)
+static const char *do_compress(bufferlist::iterator &p, size_t size,bufferlist &out)
 {
   static int first = 1;
   MT_RdWr_t rdwr;
+  readArg rarg;
+  rarg.p = &p;
+  rarg.remain = size;
   size_t ret;
 
   if (first) {
-//    headline();
     first = 0;
   }
-
-  if (opt_timings && opt_verbose && opt_mode == MODE_COMPRESS)
-    gettimeofday(&tms, NULL);
 
   /* 1) setup read/write functions */
   rdwr.fn_read = ReadData;
   rdwr.fn_write = WriteData;
-  rdwr.arg_read = (void *)&in;
+  rdwr.arg_read = (void *)&rarg;
   rdwr.arg_write = (void *)&out;
 
   /* 2) create compression context */
-  cctx = MT_createCCtx(opt_threads, opt_level, opt_bufsize);
+  cctx = MT_createCCtx(1, opt_level, opt_bufsize);
   if (!cctx)
     return "Allocating compression context failed!";
 
@@ -188,6 +183,47 @@ static const char *do_compress(const bufferlist &in, bufferlist &out)
   return 0;
 }
 
+static const char *do_decompress(bufferlist::iterator &p, size_t size,bufferlist &out)
+{
+        static int first = 1;
+        MT_RdWr_t rdwr;
+        readArg rarg;
+        rarg.p = &p;
+        rarg.remain = size;
+        size_t ret;
+
+        if (first) {
+                first = 0;
+        }
+
+        /* 1) setup read/write functions */
+        rdwr.fn_read = ReadData;
+        rdwr.fn_write = WriteData;
+        rdwr.arg_read = (void *)&rarg;
+        rdwr.arg_write = (void *)&out;
+        /* 2) create compression context */
+        dctx = MT_createDCtx(1, opt_bufsize);
+        if (!dctx)
+                return "Allocating decompression context failed!";
+
+        /* 3) compress */
+        ret = MT_decompressDCtx(dctx, &rdwr);
+        if (MT_isError(ret))
+                return MT_getErrorString(ret);
+
+        /* 4) get decompression statistic */
+        if (opt_timings && opt_verbose && opt_mode == MODE_DECOMPRESS)
+                fprintf(stderr, "%d;%d;%lu;%lu;%lu\n",
+                        opt_level, opt_threads,
+                        (unsigned long)MT_GetInsizeDCtx(dctx),
+                        (unsigned long)MT_GetOutsizeDCtx(dctx),
+                        (unsigned long)MT_GetFramesDCtx(dctx));
+
+        MT_freeDCtx(dctx);
+
+        return 0;
+}
+
 class ZstdMtCompressor : public Compressor {
  public:
     ZstdMtCompressor() : Compressor(COMP_ALG_ZSTD, "zstdmt") {}
@@ -196,7 +232,8 @@ class ZstdMtCompressor : public Compressor {
 
 
   int compress(const bufferlist &src, bufferlist &dst) override {
-    do_compress(src,dst);
+    bufferlist::iterator i = const_cast<bufferlist&>(src).begin();
+    do_compress(i,src.length(),dst);
     return 0;
   }
 
@@ -208,34 +245,7 @@ class ZstdMtCompressor : public Compressor {
   int decompress(bufferlist::iterator &p,
 		 size_t compressed_len,
 		 bufferlist &dst) override {
-    if (compressed_len < 4) {
-      return -1;
-    }
-    compressed_len -= 4;
-    uint32_t dst_len;
-    decode(dst_len, p);
-
-    bufferptr dstptr(dst_len);
-    ZSTD_outBuffer_s outbuf;
-    outbuf.dst = dstptr.c_str();
-    outbuf.size = dstptr.length();
-    outbuf.pos = 0;
-    ZSTD_DStream *s = ZSTD_createDStream();
-    ZSTD_initDStream(s);
-    while (compressed_len > 0) {
-      if (p.end()) {
-	return -1;
-      }
-      ZSTD_inBuffer_s inbuf;
-      inbuf.pos = 0;
-      inbuf.size = p.get_ptr_and_advance(compressed_len,
-					 (const char**)&inbuf.src);
-      ZSTD_decompressStream(s, &outbuf, &inbuf);
-      compressed_len -= inbuf.size;
-    }
-    ZSTD_freeDStream(s);
-
-    dst.append(dstptr, 0, outbuf.pos);
+    do_decompress(p,compressed_len,dst);
     return 0;
   }
 };

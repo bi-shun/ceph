@@ -719,8 +719,8 @@ size_t ZSTDMT_decompressDCtx(ZSTDMT_DCtx * ctx, ZSTDMT_RdWr_t * rdwr)
 
 	/* check for ZSTDMT_MAGIC_SKIPPABLE */
 	in->buf = buf;
-	in->size = 16;
-	rv = ctx->fn_read(ctx->arg_read, in);
+        in->size = 16;
+        rv = ctx->fn_read(ctx->arg_read, in);
 	if (rv != 0)
 		return mt_error(rv);
 
