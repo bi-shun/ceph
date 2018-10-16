@@ -22,10 +22,16 @@ if(HAVE_BROTLI)
   add_subdirectory(brotli)
 endif()
 
+if(HAVE_LZFSE)
+  add_subdirectory(lzfse)
+endif()
+add_subdirectory(zstdmt)
+
 set(ceph_compressor_libs
     ceph_snappy
     ceph_zlib
-    ceph_zstd)
+    ceph_zstd
+    ceph_zstdmt)
 
 if(HAVE_LZ4)
   list(APPEND ceph_compressor_libs ceph_lz4)
@@ -33,6 +39,10 @@ endif()
 
 if(HAVE_BROTLI)
   list(APPEND ceph_compressor_libs ceph_brotli)
+endif()
+
+if(HAVE_LZFSE)
+  list(APPEND ceph_compressor_libs ceph_lzfse)
 endif()
 
 add_custom_target(compressor_plugins DEPENDS

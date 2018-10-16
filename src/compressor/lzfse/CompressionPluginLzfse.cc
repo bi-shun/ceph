@@ -1,6 +1,6 @@
 #include "acconfig.h"
 #include "ceph_ver.h"
-#include "CompressionPluginBrotli.h"
+#include "CompressionPluginLzfse.h"
 #include "common/ceph_context.h"
 
 const char *__ceph_plugin_version()
@@ -13,6 +13,6 @@ int __ceph_plugin_init(CephContext *cct,
                        const std::string& name)
 {
   PluginRegistry *instance = cct->get_plugin_registry();
-  return instance->add(type, name, new CompressionPluginBrotli(cct));
+  return instance->add(type, name, new CompressionPluginLzfse(cct));
 }
 

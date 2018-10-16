@@ -43,6 +43,10 @@ public:
 #ifdef HAVE_BROTLI
     COMP_ALG_BROTLI = 5,
 #endif
+#ifdef HAVE_LZFSE
+    COMP_ALG_LZFSE = 6,
+#endif
+    COMP_ALG_ZSTDMT = 7,
     COMP_ALG_LAST   //the last value for range checks
   };
 
@@ -58,6 +62,10 @@ public:
 #ifdef HAVE_BROTLI
 	{ "brotli",	COMP_ALG_BROTLI },
 #endif
+#ifdef HAVE_LZFSE
+  { "lzfse",	COMP_ALG_LZFSE },
+#endif
+  { "zstdmt", COMP_ALG_ZSTDMT}
   };
 
   // compression options

@@ -90,6 +90,9 @@
 /* Defined if you have BROTLI */
 #cmakedefine HAVE_BROTLI
 
+/* Defined if you have LZFSE */
+#cmakedefine HAVE_LZFSE
+
 /* Defined if you have libaio */
 #cmakedefine HAVE_LIBAIO
 
