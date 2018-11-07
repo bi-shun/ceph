@@ -1,9 +1,7 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
-// vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
  *
- * Copyright (C) 2015 Haomai Wang <haomaiwang@gmail.com>
+ * Copyright (C) 2018 BI SHUN KE <aionshun@livemail.tw>
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,7 +14,6 @@
 #define CEPH_ZSTDMTCOMPRESSOR_H
 #define ZSTD_STATIC_LINKING_ONLY
 #include "zstd/lib/zstd.h"
-//
 #include "include/buffer.h"
 #include "include/encoding.h"
 #include "compressor/Compressor.h"
@@ -126,6 +123,5 @@ class ZstdMtCompressor : public Compressor {
     return 0;
   }
 };
-
 
 #endif

@@ -39,18 +39,18 @@ extern "C" {
  ****************************************/
 
 typedef enum {
-  ZSTDMT_error_no_error,
-  ZSTDMT_error_memory_allocation,
-  ZSTDMT_error_init_missing,
-  ZSTDMT_error_read_fail,
-  ZSTDMT_error_write_fail,
-  ZSTDMT_error_data_error,
-  ZSTDMT_error_frame_compress,
-  ZSTDMT_error_frame_decompress,
-  ZSTDMT_error_compressionParameter_unsupported,
-  ZSTDMT_error_compression_library,
-  ZSTDMT_error_canceled,
-  ZSTDMT_error_maxCode
+	ZSTDMT_error_no_error,
+	ZSTDMT_error_memory_allocation,
+	ZSTDMT_error_init_missing,
+	ZSTDMT_error_read_fail,
+	ZSTDMT_error_write_fail,
+	ZSTDMT_error_data_error,
+	ZSTDMT_error_frame_compress,
+	ZSTDMT_error_frame_decompress,
+	ZSTDMT_error_compressionParameter_unsupported,
+	ZSTDMT_error_compression_library,
+	ZSTDMT_error_canceled,
+	ZSTDMT_error_maxCode
 } ZSTDMT_ErrorCode;
 
 extern size_t zstdmt_errcode;

@@ -147,7 +147,7 @@ static int IsZstd_Magic(unsigned char *buf)
 	if (magic == ZSTDMT_MAGICNUMBER_V01)
 		return 1;
 	return (magic >= ZSTDMT_MAGICNUMBER_MIN
-		&& magic <= ZSTDMT_MAGICNUMBER_MAX);
+					&& magic <= ZSTDMT_MAGICNUMBER_MAX);
 }
 
 /**
@@ -164,12 +164,12 @@ static int IsZstd_Skippable(unsigned char *buf)
 static size_t mt_error(int rv)
 {
 	switch (rv) {
-	case -1:
-		return ZSTDMT_ERROR(read_fail);
-	case -2:
-		return ZSTDMT_ERROR(canceled);
-	case -3:
-		return ZSTDMT_ERROR(memory_allocation);
+		case -1:
+			return ZSTDMT_ERROR(read_fail);
+		case -2:
+			return ZSTDMT_ERROR(canceled);
+		case -3:
+			return ZSTDMT_ERROR(memory_allocation);
 	}
 
 	/* XXX, some catch all other errors */
@@ -185,7 +185,7 @@ static size_t pt_write(ZSTDMT_DCtx * ctx, struct writelist *wl)
 
 	/* move the entry to the done list */
 	list_move(&wl->node, &ctx->writelist_done);
- again:
+	again:
 	/* check, what can be written ... */
 	list_for_each(entry, &ctx->writelist_done) {
 		wl = list_entry(entry, struct writelist, node);
@@ -357,13 +357,13 @@ static size_t pt_read(ZSTDMT_DCtx * ctx, ZSTDMT_Buffer * in, size_t * frame)
 	/* done, no error */
 	return 0;
 
- error_data:
+	error_data:
 	pthread_mutex_unlock(&ctx->read_mutex);
 	return ZSTDMT_ERROR(data_error);
- error_read:
+	error_read:
 	pthread_mutex_unlock(&ctx->read_mutex);
 	return ZSTDMT_ERROR(read_fail);
- error_nomem:
+	error_nomem:
 	pthread_mutex_unlock(&ctx->read_mutex);
 	return ZSTDMT_ERROR(memory_allocation);
 }
@@ -403,7 +403,7 @@ static void *pt_decompress(void *arg)
 		} else {
 			/* allocate new one */
 			wl = (struct writelist *)
-			    malloc(sizeof(struct writelist));
+							malloc(sizeof(struct writelist));
 			if (!wl) {
 				result = ZSTDMT_ERROR(memory_allocation);
 				goto error_unlock;
@@ -444,19 +444,19 @@ static void *pt_decompress(void *arg)
 		zIn.pos = 0;
 
 		for (;;) {
- again:
+			again:
 			/* decompress loop */
 			zOut.size = out->allocated;
 			zOut.dst = out->buf;
 			zOut.pos = 0;
 
 			dprintf
-			    ("ZSTD_decompressStream() zIn.size=%zu zIn.pos=%zu zOut.size=%zu zOut.pos=%zu\n",
-			     zIn.size, zIn.pos, zOut.size, zOut.pos);
+			("ZSTD_decompressStream() zIn.size=%zu zIn.pos=%zu zOut.size=%zu zOut.pos=%zu\n",
+			 zIn.size, zIn.pos, zOut.size, zOut.pos);
 			result = ZSTD_decompressStream(w->dctx, &zOut, &zIn);
 			dprintf
-			    ("ZSTD_decompressStream(), ret=%zu zIn.size=%zu zIn.pos=%zu zOut.size=%zu zOut.pos=%zu\n",
-			     result, zIn.size, zIn.pos, zOut.size, zOut.pos);
+			("ZSTD_decompressStream(), ret=%zu zIn.size=%zu zIn.pos=%zu zOut.size=%zu zOut.pos=%zu\n",
+			 result, zIn.size, zIn.pos, zOut.size, zOut.pos);
 			if (ZSTD_isError(result))
 				goto error_clib;
 
@@ -468,14 +468,14 @@ static void *pt_decompress(void *arg)
 					bnew = malloc(collect.size + zOut.pos);
 					if (!bnew) {
 						result =
-						    ZSTDMT_ERROR
-						    (memory_allocation);
+										ZSTDMT_ERROR
+										(memory_allocation);
 						goto error_lock;
 					}
 					memcpy((char *)bnew, collect.buf,
-					       collect.size);
+								 collect.size);
 					memcpy((char *)bnew + collect.size,
-					       out->buf, zOut.pos);
+								 out->buf, zOut.pos);
 					free(collect.buf);
 					free(out->buf);
 					out->buf = bnew;
@@ -500,10 +500,10 @@ static void *pt_decompress(void *arg)
 			if (result != 0) {
 				/* collect old content from out */
 				collect.buf =
-				    realloc(collect.buf,
-					    collect.size + out->size);
+								realloc(collect.buf,
+												collect.size + out->size);
 				memcpy((char *)collect.buf + collect.size,
-				       out->buf, out->size);
+							 out->buf, out->size);
 				collect.size = collect.size + out->size;
 
 				/* double the buffer, until it fits */
@@ -514,7 +514,7 @@ static void *pt_decompress(void *arg)
 				out->buf = realloc(out->buf, out->size);
 				if (!out->buf) {
 					result =
-					    ZSTDMT_ERROR(memory_allocation);
+									ZSTDMT_ERROR(memory_allocation);
 					goto error_lock;
 				}
 				out->allocated = out->size;
@@ -534,13 +534,13 @@ static void *pt_decompress(void *arg)
 		free(in->buf);
 	return 0;
 
- error_clib:
+	error_clib:
 	zstdmt_errcode = result;
 	result = ZSTDMT_ERROR(compression_library);
 	/* fall through */
- error_lock:
+	error_lock:
 	pthread_mutex_lock(&ctx->write_mutex);
- error_unlock:
+	error_unlock:
 	list_move(&wl->node, &ctx->writelist_free);
 	pthread_mutex_unlock(&ctx->write_mutex);
 	if (in->allocated)
@@ -670,16 +670,16 @@ static size_t st_decompress(void *arg)
 		zIn.pos = 0;
 	}			/* read */
 
- error_clib:
+	error_clib:
 	zstdmt_errcode = result;
 	result = ZSTDMT_ERROR(compression_library);
 	/* fall through */
- error:
+	error:
 	/* return with error */
 	free(out->buf);
 	free(in->buf);
 	return result;
- okay:
+	okay:
 	/* no error */
 	free(out->buf);
 	free(in->buf);
@@ -719,9 +719,9 @@ size_t ZSTDMT_decompressDCtx(ZSTDMT_DCtx * ctx, ZSTDMT_RdWr_t * rdwr)
 
 	/* check for ZSTDMT_MAGIC_SKIPPABLE */
 	in->buf = buf;
-        in->size = 16;
-	      in->allocated = -1;
-        rv = ctx->fn_read(ctx->arg_read, in);
+	in->size = 16;
+	in->allocated = -1;
+	rv = ctx->fn_read(ctx->arg_read, in);
 	if (rv != 0)
 		return mt_error(rv);
 
@@ -750,7 +750,7 @@ size_t ZSTDMT_decompressDCtx(ZSTDMT_DCtx * ctx, ZSTDMT_RdWr_t * rdwr)
 		} else if (IsZstd_Magic(buf)) {
 			/* some std zstd stream */
 			dprintf("single thread style, current pos=%zu\n",
-				in->size);
+							in->size);
 			type = TYPE_SINGLE_THREAD;
 		} else {
 			/* invalid */

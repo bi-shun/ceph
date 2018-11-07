@@ -23,13 +23,13 @@
 
 class CompressionPluginZstdMt : public CompressionPlugin {
 
-public:
+ public:
 
   explicit CompressionPluginZstdMt(CephContext* cct) : CompressionPlugin(cct)
   {}
 
   int factory(CompressorRef *cs,
-                      std::ostream *ss) override
+              std::ostream *ss) override
   {
     if (compressor == 0) {
       ZstdMtCompressor *interface = new ZstdMtCompressor();

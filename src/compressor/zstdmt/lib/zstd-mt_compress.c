@@ -117,11 +117,11 @@ ZSTDMT_CCtx *ZSTDMT_createCCtx(int threads, int level, int inputsize)
 		ctx->inputsize = inputsize;
 	else {
 		const int windowLog[] = {
-			19, 19, 20, 20, 20, /*  1 -  5 */
-			21, 21, 21, 21, 21, /*  6 - 10 */
-			22, 22, 22, 22, 22, /* 11 - 15 */
-			23, 23, 23, 23, 25, /* 16 - 20 */
-			26, 27
+						19, 19, 20, 20, 20, /*  1 -  5 */
+						21, 21, 21, 21, 21, /*  6 - 10 */
+						22, 22, 22, 22, 22, /* 11 - 15 */
+						23, 23, 23, 23, 25, /* 16 - 20 */
+						26, 27
 		};
 		ctx->inputsize = 1 << (windowLog[level - 1] + 1);
 	}
@@ -149,7 +149,7 @@ ZSTDMT_CCtx *ZSTDMT_createCCtx(int threads, int level, int inputsize)
 
 	return ctx;
 
- err_ctx:
+	err_ctx:
 	free(ctx);
 	return 0;
 }
@@ -160,12 +160,12 @@ ZSTDMT_CCtx *ZSTDMT_createCCtx(int threads, int level, int inputsize)
 static size_t mt_error(int rv)
 {
 	switch (rv) {
-	case -1:
-		return ZSTDMT_ERROR(read_fail);
-	case -2:
-		return ZSTDMT_ERROR(canceled);
-	case -3:
-		return ZSTDMT_ERROR(memory_allocation);
+		case -1:
+			return ZSTDMT_ERROR(read_fail);
+		case -2:
+			return ZSTDMT_ERROR(canceled);
+		case -3:
+			return ZSTDMT_ERROR(memory_allocation);
 	}
 
 	return ZSTDMT_ERROR(read_fail);
@@ -186,7 +186,7 @@ static size_t pt_write(ZSTDMT_CCtx * ctx, struct writelist *wl)
 	if (wl->frame != ctx->curframe)
 		return 0;
 
- again:
+	again:
 	/* check, what can be written ... */
 	list_for_each(entry, &ctx->writelist_done) {
 		wl = list_entry(entry, struct writelist, node);
@@ -235,7 +235,7 @@ static void *pt_compress(void *arg)
 		} else {
 			/* allocate new one */
 			wl = (struct writelist *)
-			    malloc(sizeof(struct writelist));
+							malloc(sizeof(struct writelist));
 			if (!wl) {
 				pthread_mutex_unlock(&ctx->write_mutex);
 				free(in.buf);
@@ -258,7 +258,7 @@ static void *pt_compress(void *arg)
 		in.size = ctx->inputsize;
 		rv = ctx->fn_read(ctx->arg_read, &in);
 
-                if (rv != 0) {
+		if (rv != 0) {
 			pthread_mutex_unlock(&ctx->read_mutex);
 			result = mt_error(rv);
 			goto error;
@@ -283,8 +283,8 @@ static void *pt_compress(void *arg)
 		{
 			unsigned char *outbuf = out->buf;
 			result =
-			    ZSTD_compress(outbuf + 12, out->size - 12, in.buf,
-					  in.size, ctx->level);
+							ZSTD_compress(outbuf + 12, out->size - 12, in.buf,
+														in.size, ctx->level);
 			if (ZSTD_isError(result)) {
 				zstdmt_errcode = result;
 				result = ZSTDMT_ERROR(compression_library);
@@ -310,9 +310,9 @@ static void *pt_compress(void *arg)
 			goto error;
 	}
 
- okay:
+	okay:
 	return 0;
- error:
+	error:
 	pthread_mutex_lock(&ctx->write_mutex);
 	list_move(&wl->node, &ctx->writelist_free);
 	pthread_mutex_unlock(&ctx->write_mutex);
