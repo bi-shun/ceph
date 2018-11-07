@@ -25,13 +25,15 @@ endif()
 if(HAVE_LZFSE)
   add_subdirectory(lzfse)
 endif()
-add_subdirectory(zstdmt)
+
+if(HAVE_ZSTDMT)
+  add_subdirectory(zstdmt)
+endif()
 
 set(ceph_compressor_libs
     ceph_snappy
     ceph_zlib
-    ceph_zstd
-    ceph_zstdmt)
+    ceph_zstd)
 
 if(HAVE_LZ4)
   list(APPEND ceph_compressor_libs ceph_lz4)
@@ -43,6 +45,10 @@ endif()
 
 if(HAVE_LZFSE)
   list(APPEND ceph_compressor_libs ceph_lzfse)
+endif()
+
+if(HAVE_ZSTDMT)
+  list(APPEND ceph_compressor_libs ceph_zstdmt)
 endif()
 
 add_custom_target(compressor_plugins DEPENDS

@@ -93,6 +93,9 @@
 /* Defined if you have LZFSE */
 #cmakedefine HAVE_LZFSE
 
+/* Defined if you have ZSTDMT */
+#cmakedefine HAVE_ZSTDMT
+
 /* Defined if you have libaio */
 #cmakedefine HAVE_LIBAIO
 

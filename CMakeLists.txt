@@ -328,6 +328,12 @@ if(WITH_LZFSE)
   set(HAVE_LZFSE TRUE)
 endif(WITH_LZFSE)
 
+
+option(WITH_ZSTDMT "ZSTDMT compression support" OFF)
+if(WITH_ZSTDMT)
+  set(HAVE_ZSTDMT TRUE)
+endif(WITH_ZSTDMT)
+
 option(WITH_CEPH_DEBUG_MUTEX "Use debug ceph::mutex with lockdep" OFF)
 
 #if allocator is set on command line make sure it matches below strings

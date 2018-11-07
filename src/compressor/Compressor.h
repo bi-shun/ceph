@@ -46,7 +46,9 @@ public:
 #ifdef HAVE_LZFSE
     COMP_ALG_LZFSE = 6,
 #endif
+#ifdef HAVE_ZSTDMT
     COMP_ALG_ZSTDMT = 7,
+#endif
     COMP_ALG_LAST   //the last value for range checks
   };
 
@@ -65,7 +67,9 @@ public:
 #ifdef HAVE_LZFSE
   { "lzfse",	COMP_ALG_LZFSE },
 #endif
-  { "zstdmt", COMP_ALG_ZSTDMT}
+#ifdef HAVE_ZSTDMT
+  { "zstdmt", COMP_ALG_ZSTDMT},
+#endif
   };
 
   // compression options

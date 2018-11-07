@@ -22,17 +22,24 @@
 #include "compressor/Compressor.h"
 #include "lib/zstd-mt.h"
 #include <thread>
-#include "platform.h"
+#include "include/scope_guard.h"
+
+#define COMPRESSION_LEVEL 5
 class ZstdMtCompressor : public Compressor {
  public:
+  typedef struct {
+    bufferlist::const_iterator *p;
+    size_t compressed_len;
+  } DeReadArg;
+
   ZstdMtCompressor() : Compressor(COMP_ALG_ZSTDMT, "zstdmt") {}
   int compress(const bufferlist &src, bufferlist &dst) override {
-    ZSTDMT_CCtx *cctx = ZSTDMT_createCCtx(4, 5, 0);
+    ZSTDMT_CCtx *cctx = ZSTDMT_createCCtx(std::thread::hardware_concurrency(), COMPRESSION_LEVEL, 0);
+    auto sg = make_scope_guard([&cctx] { ZSTDMT_freeCCtx(cctx); });
     if (cctx == nullptr) {
       return -1;
     }
     ZSTDMT_RdWr_t rdwr;
-    auto i = src.begin();
     rdwr.fn_read = [](void *arg, ZSTDMT_Buffer *in){
       bufferlist::const_iterator* src = static_cast<bufferlist::const_iterator*>(arg);
       size_t remain = std::min<size_t>(in->size,(size_t)src->get_remaining());
@@ -58,13 +65,12 @@ class ZstdMtCompressor : public Compressor {
       dst->append(outptr, 0, out->size);
       return 0;
     };
+    auto i = src.begin();
     rdwr.arg_read = const_cast<bufferlist::const_iterator*>(&i);
     rdwr.arg_write = &dst;
     auto ret = ZSTDMT_compressCCtx(cctx, &rdwr);
     if (ZSTDMT_isError(ret))
       return -1;
-
-    ZSTDMT_freeCCtx(cctx);
     return 0;
   }
 
@@ -72,16 +78,13 @@ class ZstdMtCompressor : public Compressor {
     auto i = std::cbegin(src);
     return decompress(i, src.length(), dst);
   }
-  typedef struct {
-    bufferlist::const_iterator *p;
-    size_t compressed_len;
-  } DeReadArg;
 
   int decompress(bufferlist::const_iterator &p,
                  size_t compressed_len,
                  bufferlist &dst) override {
 
-    auto dctx = ZSTDMT_createDCtx(4, 0);
+    auto dctx = ZSTDMT_createDCtx(std::thread::hardware_concurrency(), 0);
+    auto sg = make_scope_guard([&dctx] { ZSTDMT_freeDCtx(dctx); });
     if (!dctx)
       return -1;
     ZSTDMT_RdWr_t rdwr;
@@ -121,7 +124,6 @@ class ZstdMtCompressor : public Compressor {
     if (ZSTDMT_isError(ret))
       return -1;
     return 0;
-
   }
 };
 
